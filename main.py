@@ -20,12 +20,15 @@ def save_history(urls):
     with open(HISTORY_FILE, "w") as f:
         f.write("\n".join(urls[:100]))
 
+ICON_URL = "https://raw.githubusercontent.com/tanatkh77-netizen/Bot/main/IMG_7525.jpeg"
+
 def post_to_discord(text, url):
     if not DISCORD_WEBHOOK_URL:
         return
     
     data = {
         "username": "てとぼっと",
+        "avatar_url": ICON_URL,
         "content": f"\n{text}\n{url}"
     }
     
