@@ -78,7 +78,7 @@ def get_yahoo_realtime_tweets():
             seen.add(t['url'])
             unique_tweets.append(t)
             
-    print(f"DEBUG: ページ内から {len(unique_tweets)} 件のユニークなツイートを発見しました。")
+    print(f" {len(unique_tweets)} 件の新規ツイートを発見しました。")
     return unique_tweets
 
 def main():
@@ -90,7 +90,7 @@ def main():
         return
 
     history = load_history()
-    print(f"DEBUG: 過去の履歴数: {len(history)} 件")
+    print(f"履歴数: {len(history)} 件")
     tweets.reverse()
     
     new_history = history.copy()
