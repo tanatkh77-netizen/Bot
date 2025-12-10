@@ -32,7 +32,7 @@ def post_to_twitter(tweet_url):
         )
 
         # 投稿内容の作成
-        text = f"気になるツイートを発見！\n{tweet_url}"
+        text = tweet_url
 
         # ツイート投稿
         client.create_tweet(text=text)
