@@ -2,8 +2,9 @@ import os
 import requests
 from bs4 import BeautifulSoup
 import time
+import re
 
-KEYWORDS = ["てとぼ", "テトぼ", "テトリスぼ", "スワぼ", "スワップぼ"]
+KEYWORDS = ["てとぼ", "テトぼ", "テトリスぼ", "スワぼ", "すわぼ", "スワップぼ"]
 QUERY = " OR ".join(KEYWORDS)
 
 HISTORY_FILE = "history.txt"
@@ -63,9 +64,11 @@ def get_yahoo_realtime_tweets():
         if ("/status/" in href) and ("twitter.com" in href or "x.com" in href):
             clean_url = href.split('?')[0]
             
-            container = a_tag.find_parent('div')
+                        container = a_tag.find_parent('div')
             text = container.get_text(strip=True) if container else "詳細なし"
             
+            text = re.sub(r'\d{1,2}(秒|分|時間|日)前', '', text)
+
             if len(text) > 150:
                 text = text[:150] + "..."
 
