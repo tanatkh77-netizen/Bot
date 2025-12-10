@@ -3,12 +3,44 @@ import requests
 from bs4 import BeautifulSoup
 import time
 import re
+import tweepy
 
 KEYWORDS = ["てとぼ", "テトぼ", "テトリスぼ", "スワぼ", "すわぼ", "スワップぼ"]
 QUERY = " OR ".join(KEYWORDS)
 
 HISTORY_FILE = "history.txt"
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL")
+
+TWITTER_API_KEY = os.environ.get("TWITTER_API_KEY")
+TWITTER_API_SECRET = os.environ.get("TWITTER_API_SECRET")
+TWITTER_ACCESS_TOKEN = os.environ.get("TWITTER_ACCESS_TOKEN")
+TWITTER_ACCESS_TOKEN_SECRET = os.environ.get("TWITTER_ACCESS_TOKEN_SECRET")
+
+def post_to_twitter(tweet_url):
+    # 鍵が揃っていない場合はスキップ
+    if not all([TWITTER_API_KEY, TWITTER_API_SECRET, TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_TOKEN_SECRET]):
+        print("Twitter APIキーが設定されていません。")
+        return
+
+    try:
+        # Tweepyクライアントの作成 (API v2)
+        client = tweepy.Client(
+            consumer_key=TWITTER_API_KEY,
+            consumer_secret=TWITTER_API_SECRET,
+            access_token=TWITTER_ACCESS_TOKEN,
+            access_token_secret=TWITTER_ACCESS_TOKEN_SECRET
+        )
+
+        # 投稿内容の作成
+        text = f"気になるツイートを発見！\n{tweet_url}"
+
+        # ツイート投稿
+        client.create_tweet(text=text)
+        print(f"  -> Twitter投稿成功: {tweet_url}")
+        time.sleep(2) # 連続投稿制限避け
+
+    except Exception as e:
+        print(f"  -> Twitter投稿エラー: {e}")
 
 def load_history():
     if not os.path.exists(HISTORY_FILE):
@@ -104,12 +136,18 @@ def main():
 
     for tweet in tweets:
         url = tweet['url']
-        
+
         if url in history:
             continue
-      
+
         print(f"New Tweet Found! : {url}")
         post_to_discord(tweet['text'], url)
+
+        # ここに追加！
+        post_to_twitter(url)
+
+        new_history.insert(0, url)
+        send_count += 1
              
         new_history.insert(0, url)
         send_count += 1
