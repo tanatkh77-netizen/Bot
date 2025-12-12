@@ -6,6 +6,7 @@ import re
 import tweepy
 
 KEYWORDS = ["てとぼ", "テトぼ", "テトリスぼ", "スワぼ", "すわぼ", "スワップぼ"]
+BLOCKED_IDS = ["Intai2110", "blocked_user_id_2"]
 QUERY = " OR ".join(KEYWORDS)
 
 HISTORY_FILE = "history.txt"
@@ -17,13 +18,11 @@ TWITTER_ACCESS_TOKEN = os.environ.get("TWITTER_ACCESS_TOKEN")
 TWITTER_ACCESS_TOKEN_SECRET = os.environ.get("TWITTER_ACCESS_TOKEN_SECRET")
 
 def post_to_twitter(tweet_url):
-    # 鍵が揃っていない場合はスキップ
     if not all([TWITTER_API_KEY, TWITTER_API_SECRET, TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_TOKEN_SECRET]):
         print("Twitter APIキーが設定されていません。")
         return
 
     try:
-        # Tweepyクライアントの作成 (API v2)
         client = tweepy.Client(
             consumer_key=TWITTER_API_KEY,
             consumer_secret=TWITTER_API_SECRET,
@@ -31,13 +30,11 @@ def post_to_twitter(tweet_url):
             access_token_secret=TWITTER_ACCESS_TOKEN_SECRET
         )
 
-        # 投稿内容の作成
         text = tweet_url
 
-        # ツイート投稿
         client.create_tweet(text=text)
         print(f"  -> Twitter投稿成功: {tweet_url}")
-        time.sleep(2) # 連続投稿制限避け
+        time.sleep(2)
 
     except Exception as e:
         print(f"  -> Twitter投稿エラー: {e}")
@@ -140,10 +137,18 @@ def main():
         if url in history:
             continue
 
+        is_blocked = False
+        for blocked_id in BLOCKED_IDS:
+            if blocked_id in url:
+                is_blocked = True
+                break
+        
+        if is_blocked:
+            print(f"Skipped blocked user: {url}")
+            continue
+
         print(f"New Tweet Found! : {url}")
         post_to_discord(tweet['text'], url)
-
-        # ここに追加！
         post_to_twitter(url)
 
         new_history.insert(0, url)
