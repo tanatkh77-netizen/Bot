@@ -39,18 +39,18 @@ jobs:
         run: python main.py
 
       - name: Upload debug files
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: debug-files-${{ github.run_id }}
           path: |
             *.png
             *.html
-          retention-days: 7
+          retention-days: 3
 
       - name: Commit and push if changed
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
-          git add history.txt
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Update history [skip ci]" && git push)
+          git add history.txt cookies.pkl
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update history and cookies [skip ci]" && git push)
