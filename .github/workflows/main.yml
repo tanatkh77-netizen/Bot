@@ -23,13 +23,8 @@ jobs:
 
       - name: Setup Chrome
         uses: browser-actions/setup-chrome@v1
-
-      - name: Verify installation
-        run: |
-          which google-chrome
-          which chromedriver
-          google-chrome --version
-          chromedriver --version
+        with:
+          chrome-version: stable
 
       - name: Install dependencies
         run: |
@@ -44,7 +39,7 @@ jobs:
         run: python main.py
 
       - name: Upload debug files
-        # if: failure() を削除（常にアップロード）
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: debug-files-${{ github.run_id }}
