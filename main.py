@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 import time
 import re
+import random
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
@@ -12,7 +13,7 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 import urllib.parse
 
 # --- 設定エリア ---
-KEYWORDS = ["てとぼ", "テトぼ", "テトリスぼ", "スワぼ", "すわぼ", "スワップぼ"]
+KEYWORDS = ["てとぼ", "テトぼ", "テトぼっと", "テトリスぼ", "スワぼ", "すわぼ", "スワップぼ"]
 BLOCKED_IDS = ["Hikarukisi_lv77", "sw_maha"]
 QUERY = " OR ".join(KEYWORDS)
 HISTORY_FILE = "history.txt"
@@ -41,14 +42,14 @@ class Tweetbot:
         chrome_options.add_argument(f'--user-agent={self.user_agent}')
         chrome_options.add_argument(f'--user-data-dir={profile_dir}')
         
-        # ボット検知回避用の追加設定
+        # ボット検知回避用
         chrome_options.add_argument('--disable-blink-features=AutomationControlled')
         chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
         chrome_options.add_experimental_option('useAutomationExtension', False)
         
         self.driver = webdriver.Chrome(options=chrome_options)
         
-        # navigator.webdriverをundefinedにする（検知回避の核心）
+        # navigator.webdriverの偽装
         self.driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
             "source": """
                 Object.defineProperty(navigator, 'webdriver', {
@@ -58,90 +59,92 @@ class Tweetbot:
         })
         
         self.driver.implicitly_wait(10)
-        self.wait = WebDriverWait(self.driver, 20)
+        self.wait = WebDriverWait(self.driver, 25) # 待機時間をさらに延長
 
     def save_debug_info(self, prefix="debug"):
-        """エラー時の画面とソースを保存（デバッグ用）"""
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         self.driver.save_screenshot(f"{prefix}_{timestamp}.png")
         with open(f"{prefix}_{timestamp}.html", 'w', encoding='utf-8') as f:
             f.write(self.driver.page_source)
-        print(f"  [DEBUG] {prefix} 情報を保存しました。")
 
     def login(self):
-        """Twitterログイン処理"""
         driver = self.driver
-        print("  -> Twitterログイン開始...")
-        driver.get('https://twitter.com/login')
-        time.sleep(5)
+        print("  -> Twitterログインプロセス開始...")
+        driver.get('https://x.com/login')
+        time.sleep(random.uniform(5, 8))
         
         try:
             # 1. メールアドレス入力
-            email_field = self.wait.until(EC.presence_of_element_located((By.XPATH, "//input[@name='text']")))
-            email_field.send_keys(self.email)
-            email_field.send_keys(Keys.RETURN)
-            print("  -> メールアドレス送信完了")
-            time.sleep(3)
+            email_input = self.wait.until(EC.visibility_of_element_located((By.NAME, "text")))
+            email_input.send_keys(self.email)
+            time.sleep(random.uniform(1, 2))
             
-            # 2. ユーザー名確認画面（もし出たら）
-            # 入力フィールドが1つ以上あり、URLがログイン途中の場合にチェック
-            curr_url = driver.current_url
-            if "login" in curr_url or "checkpoint" in curr_url:
-                try:
-                    # ユーザー名入力が必要なフィールドを特定
-                    username_field = driver.find_elements(By.XPATH, "//input[@data-testid='ocfEnterTextTextInput']")
-                    if username_field:
-                        print("  -> ユーザー名確認を求められました。入力します。")
-                        username_field[0].send_keys(self.username)
-                        username_field[0].send_keys(Keys.RETURN)
-                        time.sleep(3)
-                except:
-                    pass
+            # 「次へ」ボタンを直接クリック
+            next_btn = driver.find_element(By.XPATH, "//span[text()='Next' or text()='次へ']")
+            driver.execute_script("arguments[0].click();", next_btn)
+            print("  -> メール送信完了、次へ進みます")
+            time.sleep(random.uniform(3, 5))
+            
+            # 2. ユーザー名確認画面またはパスワード入力画面の判定
+            # 現在のURLや画面内のテキストを確認
+            try:
+                # ユーザー名を求められている場合 (data-testid="ocfEnterTextTextInput")
+                verify_input = driver.find_elements(By.XPATH, "//input[@data-testid='ocfEnterTextTextInput']")
+                if verify_input:
+                    print("  -> ユーザー名確認が求められました。")
+                    verify_input[0].send_keys(self.username)
+                    time.sleep(1)
+                    v_next_btn = driver.find_element(By.XPATH, "//span[text()='Next' or text()='次へ']")
+                    driver.execute_script("arguments[0].click();", v_next_btn)
+                    time.sleep(random.uniform(3, 5))
+            except Exception:
+                pass
 
             # 3. パスワード入力
-            password_field = self.wait.until(EC.presence_of_element_located((By.XPATH, "//input[@name='password']")))
-            password_field.send_keys(self.password)
-            password_field.send_keys(Keys.RETURN)
-            print("  -> パスワード送信完了")
+            password_input = self.wait.until(EC.visibility_of_element_located((By.NAME, "password")))
+            password_input.send_keys(self.password)
+            time.sleep(1)
             
-            # ホーム画面に遷移するまで待機
+            # ログインボタンをクリック
+            login_btn = driver.find_element(By.XPATH, "//span[text()='Log in' or text()='ログイン']")
+            driver.execute_script("arguments[0].click();", login_btn)
+            
+            # ログイン完了待機（ホーム画面のURLになるまで）
             self.wait.until(EC.url_contains("home"))
-            print("  -> Twitterログイン成功")
+            print("  -> ログイン成功")
             return True
                 
         except Exception as e:
-            print(f"  -> ログイン失敗: {type(e).__name__}")
-            self.save_debug_info("login_fail")
+            print(f"  -> ログイン処理中にエラー発生: {type(e).__name__}")
+            self.save_debug_info("login_error_detail")
             return False
 
     def tweet_url(self, tweet_url):
-        """指定URLを投稿"""
         driver = self.driver
-        print(f"  -> ツイート投稿開始: {tweet_url}")
+        print(f"  -> 投稿開始: {tweet_url}")
         
         text = urllib.parse.quote(f"RT {tweet_url}")
-        url = f"https://twitter.com/intent/tweet?text={text}"
+        url = f"https://x.com/intent/tweet?text={text}"
         driver.get(url)
-        time.sleep(5)
+        time.sleep(random.uniform(5, 7))
         
         try:
-            # 投稿ボタンをクリック（data-testid="tweetButton" または 属性で探す）
+            # 投稿ボタンをクリック
             tweet_btn = self.wait.until(EC.element_to_be_clickable((By.XPATH, "//button[@data-testid='tweetButton']")))
             driver.execute_script("arguments[0].click();", tweet_btn)
-            time.sleep(5)
-            print(f"  -> 投稿成功: {tweet_url}")
+            time.sleep(random.uniform(5, 8))
+            print(f"  -> 投稿完了")
             return True
         except Exception as e:
             print(f"  -> 投稿ボタンが見つかりません。")
-            self.save_debug_info("tweet_error")
+            self.save_debug_info("post_error")
             return False
     
     def close(self):
         self.driver.quit()
 
 def load_history():
-    if not os.path.exists(HISTORY_FILE):
-        return []
+    if not os.path.exists(HISTORY_FILE): return []
     with open(HISTORY_FILE, "r", encoding='utf-8') as f:
         return [line.strip() for line in f.read().splitlines() if line.strip()]
 
@@ -150,19 +153,13 @@ def save_history(urls):
         f.write("\n".join(urls[:500]))
 
 def post_to_discord(text, url):
-    if not DISCORD_WEBHOOK_URL:
-        return
-    data = {
-        "username": "てとぼっと",
-        "content": f"\n{text}\n{url}"
-    }
+    if not DISCORD_WEBHOOK_URL: return
+    data = {"username": "てとぼっと", "content": f"\n{text}\n{url}"}
     try:
         requests.post(DISCORD_WEBHOOK_URL, json=data, timeout=10)
-    except:
-        pass
+    except: pass
 
 def get_yahoo_realtime_tweets():
-    """Yahoo検索から新着取得"""
     encoded_query = urllib.parse.quote(QUERY)
     url = f"https://search.yahoo.co.jp/realtime/search?p={encoded_query}&m=recent"
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
@@ -180,7 +177,6 @@ def get_yahoo_realtime_tweets():
                 text = container.get_text(strip=True)[:150] if container else ""
                 found_tweets.append({"url": clean_url, "text": text})
         
-        # 重複削除
         unique_tweets = []
         seen = set()
         for t in found_tweets:
@@ -197,42 +193,39 @@ def main():
     tweets = get_yahoo_realtime_tweets()
     history = load_history()
     
-    # 履歴に含まれず、ブロック対象でないツイートを抽出
+    # 処理すべき新規ツイートのみをフィルタリング
     new_tweets = []
     for t in tweets:
-        if t['url'] in history:
-            continue
-        if any(uid in t['url'] for uid in BLOCKED_IDS):
-            continue
+        if t['url'] in history: continue
+        if any(uid in t['url'] for uid in BLOCKED_IDS): continue
         new_tweets.append(t)
     
     if not new_tweets:
-        print("新着ツイートはありませんでした。")
+        print("新着ツイートなし。ブラウザは起動しません。")
         return
 
-    print(f"{len(new_tweets)} 件の新着があります。Twitter投稿プロセスを開始します。")
+    print(f"{len(new_tweets)} 件の新着があります。Twitter投稿を開始します。")
 
-    # 新着があった場合のみ、ブラウザを起動してログイン
+    # 新着があった場合のみログインを試みる
     bot = Tweetbot(TWITTER_EMAIL, TWITTER_PASSWORD, TWITTER_USERNAME)
     if bot.login():
         success_urls = []
-        # 古いものから順に投稿するため反転
         for tweet in reversed(new_tweets):
             post_to_discord(tweet['text'], tweet['url'])
             if bot.tweet_url(tweet['url']):
                 success_urls.append(tweet['url'])
-                time.sleep(15) # Xのレート制限対策で間隔をあける
+                time.sleep(random.uniform(10, 15)) # レート制限回避
         
         # 成功した分だけ履歴を更新
         if success_urls:
-            new_history = load_history()
+            current_history = load_history()
             for url in success_urls:
-                new_history.insert(0, url)
-            save_history(new_history)
-            print(f"合計 {len(success_urls)} 件を履歴に追加しました。")
+                current_history.insert(0, url)
+            save_history(current_history)
+            print(f"計 {len(success_urls)} 件を投稿しました。")
     
     bot.close()
-    print("--- 処理完了 ---")
+    print("--- 全ての処理を完了しました ---")
 
 if __name__ == "__main__":
     main()
