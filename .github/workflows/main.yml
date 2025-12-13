@@ -52,7 +52,7 @@ jobs:
           git diff --quiet && git diff --staged --quiet || (git commit -m "Update tweet history [skip ci]" && git push)
       - name: Upload debug files
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: debug-files
           path: |
