@@ -32,6 +32,7 @@ class Tweetbot:
         
         # プロファイルディレクトリの設定（セッション維持用）
         profile_dir = os.path.join(os.getcwd(), 'twitter_profile')
+        os.makedirs(profile_dir, exist_ok=True)
         
         # Chromeオプションの設定
         chrome_options = webdriver.ChromeOptions()
@@ -110,35 +111,21 @@ class Tweetbot:
         """ツイートボタンを複数の方法で探す"""
         driver = self.driver
         
-        # 候補となるセレクター一覧（よく変わるので複数用意）
+        # 候補となるセレクター一覧
         button_selectors = [
-            # data-testidを使ったセレクター
             (By.XPATH, "//div[@data-testid='tweetButtonInline']"),
             (By.XPATH, "//div[@data-testid='tweetButton']"),
             (By.XPATH, "//button[@data-testid='tweetButton']"),
-            
-            # テキスト内容で探す（日本語）
             (By.XPATH, "//div[@role='button']//span[contains(text(), 'ツイート')]"),
             (By.XPATH, "//button//span[contains(text(), 'ツイート')]"),
             (By.XPATH, "//*[contains(text(), 'ツイート') and @role='button']"),
-            
-            # テキスト内容で探す（英語）
             (By.XPATH, "//div[@role='button']//span[contains(text(), 'Post')]"),
             (By.XPATH, "//button//span[contains(text(), 'Post')]"),
             (By.XPATH, "//*[contains(text(), 'Post') and @role='button']"),
-            
-            # aria-labelで探す
             (By.XPATH, "//div[@aria-label='ツイートする']"),
             (By.XPATH, "//button[@aria-label='Post']"),
-            
-            # CSSセレクター
             (By.CSS_SELECTOR, "div[data-testid='tweetButton']"),
             (By.CSS_SELECTOR, "button[data-testid='tweetButton']"),
-            (By.CSS_SELECTOR, "div[role='button']:has(span:contains('ツイート'))"),
-            
-            # より一般的なセレクター
-            (By.XPATH, "//button[contains(@class, 'tweet')]"),
-            (By.XPATH, "//div[contains(@class, 'tweet')]"),
         ]
         
         for by, selector in button_selectors:
@@ -151,14 +138,12 @@ class Tweetbot:
             except:
                 continue
         
-        # 見つからなかった場合、ページのボタンを全てリストアップ
+        # 見つからなかった場合
         print("  -> ツイートボタンが見つかりません。ページ内のボタンを調査します...")
-        
-        # 全てのボタン要素を取得
         all_buttons = driver.find_elements(By.XPATH, "//button | //div[@role='button']")
         print(f"  -> ページ内のボタン数: {len(all_buttons)}")
         
-        for i, button in enumerate(all_buttons[:20]):  # 最初の20個だけ表示
+        for i, button in enumerate(all_buttons[:20]):
             try:
                 text = button.text.strip()[:50]
                 html = button.get_attribute('outerHTML')[:200]
@@ -179,13 +164,12 @@ class Tweetbot:
         url = f"https://twitter.com/intent/tweet?text={text}"
         
         driver.get(url)
-        time.sleep(8)  # ページ読み込みに十分な時間
+        time.sleep(8)
         
-        # 現在のURLとタイトルを表示
         print(f"  -> 現在のURL: {driver.current_url}")
         print(f"  -> ページタイトル: {driver.title}")
         
-        # デバッグ情報を保存（常に保存）
+        # デバッグ情報を保存
         self.save_debug_info("before_tweet")
         
         # ツイートボタンを探す
@@ -199,26 +183,15 @@ class Tweetbot:
         # ツイートボタンをクリック
         try:
             print("  -> ツイートボタンをクリックします...")
-            
-            # JavaScriptでクリック（より確実な方法）
             driver.execute_script("arguments[0].click();", tweet_button)
             time.sleep(5)
             
-            # 成功確認
             self.save_debug_info("after_tweet")
-            
-            # 投稿後のページを確認
             print(f"  -> 投稿後のURL: {driver.current_url}")
             
-            # 成功の目印を探す
-            success_indicators = [
-                "投稿しました",
-                "ツイートしました",
-                "Tweet sent",
-                "Your Tweet was sent"
-            ]
-            
             page_text = driver.page_source
+            success_indicators = ["投稿しました", "ツイートしました", "Tweet sent", "Your Tweet was sent"]
+            
             for indicator in success_indicators:
                 if indicator in page_text:
                     print(f"  -> 成功メッセージを検出: {indicator}")
@@ -263,9 +236,91 @@ def post_to_twitter(tweet_url, bot_instance=None):
         print(f"  -> Twitter投稿エラー: {e}")
         return False
 
-# ...（以下、load_history(), save_history(), post_to_discord(), get_yahoo_realtime_tweets(), main() 関数は変更なし）...
+def load_history():
+    """履歴ファイルを読み込む"""
+    if not os.path.exists(HISTORY_FILE):
+        return []
+    with open(HISTORY_FILE, "r", encoding='utf-8') as f:
+        return [line.strip() for line in f.read().splitlines() if line.strip()]
+
+def save_history(urls):
+    """履歴ファイルを保存する"""
+    with open(HISTORY_FILE, "w", encoding='utf-8') as f:
+        f.write("\n".join(urls[:1000]))
+
+ICON_URL = "https://raw.githubusercontent.com/tanatkh77-netizen/Bot/main/IMG_7525.jpeg"
+
+def post_to_discord(text, url):
+    """Discordに投稿する"""
+    if not DISCORD_WEBHOOK_URL:
+        print("  -> DISCORD_WEBHOOK_URLが設定されていません")
+        return
+    
+    data = {
+        "username": "てとぼっと",
+        "avatar_url": ICON_URL,
+        "content": f"\n{text}\n{url}"
+    }
+    
+    try:
+        response = requests.post(DISCORD_WEBHOOK_URL, json=data)
+        response.raise_for_status()
+        print(f"  -> Discord送信成功: {url}")
+        time.sleep(2)
+    except Exception as e:
+        print(f"  -> Discord送信エラー: {e}")
+
+def get_yahoo_realtime_tweets():
+    """Yahooリアルタイム検索からツイートを取得する"""
+    encoded_query = urllib.parse.quote(QUERY, safe='')
+    url = f"https://search.yahoo.co.jp/realtime/search?p={encoded_query}&m=recent"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    }
+
+    print(f"Accessing: {url}")
+    try:
+        response = requests.get(url, headers=headers, timeout=15)
+        response.raise_for_status()
+    except Exception as e:
+        print(f"Access Error: {e}")
+        return []
+
+    soup = BeautifulSoup(response.text, 'lxml')
+    
+    found_tweets = []
+    
+    for a_tag in soup.find_all('a', href=True):
+        href = a_tag['href']
+        
+        if ("/status/" in href) and ("twitter.com" in href or "x.com" in href):
+            clean_url = href.split('?')[0]
+            
+            container = a_tag.find_parent('div')
+            text = container.get_text(strip=True) if container else "詳細なし"
+            
+            text = re.sub(r'\d{1,2}(秒|分|時間|日)前', '', text)
+
+            if len(text) > 150:
+                text = text[:150] + "..."
+
+            found_tweets.append({
+                "url": clean_url,
+                "text": text
+            })
+
+    unique_tweets = []
+    seen = set()
+    for t in found_tweets:
+        if t['url'] not in seen:
+            seen.add(t['url'])
+            unique_tweets.append(t)
+            
+    print(f" {len(unique_tweets)} 件の新規ツイートを発見しました。")
+    return unique_tweets
 
 def main():
+    """メイン関数"""
     print("--- Start Checking ---")
     tweets = get_yahoo_realtime_tweets()
     
