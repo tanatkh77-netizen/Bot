@@ -38,7 +38,7 @@ class Tweetbot:
         chrome_options = webdriver.ChromeOptions()
         
         # GitHub Actions用の設定
-        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--headless=new')
         chrome_options.add_argument('--no-sandbox')
         chrome_options.add_argument('--disable-dev-shm-usage')
         chrome_options.add_argument('--disable-gpu')
@@ -100,7 +100,13 @@ class Tweetbot:
             password_input = driver.find_element(By.XPATH, "//input[@name='password']")
             password_input.send_keys(self.password)
             password_input.send_keys(Keys.RETURN)
-            time.sleep(5)
+            
+            # URLがホームなどに切り替わるのを待つ、または長めに待機
+            try:
+                self.wait.until(EC.url_contains("home"))
+            except:
+                time.sleep(10)
+                
         except Exception as e:
             print(f"  -> パスワード入力エラー: {e}")
             self.save_debug_info("login_password")
@@ -139,18 +145,7 @@ class Tweetbot:
                 continue
         
         # 見つからなかった場合
-        print("  -> ツイートボタンが見つかりません。ページ内のボタンを調査します...")
-        all_buttons = driver.find_elements(By.XPATH, "//button | //div[@role='button']")
-        print(f"  -> ページ内のボタン数: {len(all_buttons)}")
-        
-        for i, button in enumerate(all_buttons[:20]):
-            try:
-                text = button.text.strip()[:50]
-                html = button.get_attribute('outerHTML')[:200]
-                print(f"    ボタン{i+1}: テキスト='{text}', HTML={html}")
-            except:
-                pass
-        
+        print("  -> ツイートボタンが見つかりませんでした")
         return None
     
     def tweet_url(self, tweet_url):
@@ -219,12 +214,9 @@ def post_to_twitter(tweet_url, bot_instance=None):
         if bot_instance is None:
             bot = Tweetbot(TWITTER_EMAIL, TWITTER_PASSWORD, TWITTER_USERNAME)
             
-            profile_dir = os.path.join(os.getcwd(), 'twitter_profile')
-            if not os.path.isdir(profile_dir):
-                print("  -> 新規ログインが必要です")
-                bot.login()
-            else:
-                print("  -> 既存のセッションを使用します")
+            # GitHub Actionsではプロファイルが保持されないため、毎回ログインを実行する
+            print("  -> Twitter: ログイン処理を実行します")
+            bot.login()
             
             result = bot.tweet_url(tweet_url)
             bot.close()
@@ -340,12 +332,9 @@ def main():
     if all([TWITTER_EMAIL, TWITTER_PASSWORD, TWITTER_USERNAME]):
         try:
             twitter_bot = Tweetbot(TWITTER_EMAIL, TWITTER_PASSWORD, TWITTER_USERNAME)
-            profile_dir = os.path.join(os.getcwd(), 'twitter_profile')
-            if not os.path.isdir(profile_dir):
-                print("  -> Twitter: 新規ログイン")
-                twitter_bot.login()
-            else:
-                print("  -> Twitter: 既存セッションを使用")
+            # GitHub Actionsではプロファイルが保持されないため、毎回ログインを実行する
+            print("  -> Twitter: ログイン処理を実行します")
+            twitter_bot.login()
         except Exception as e:
             print(f"  -> Twitterボット初期化エラー: {e}")
             twitter_bot = None
