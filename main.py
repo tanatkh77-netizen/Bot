@@ -149,7 +149,7 @@ def main():
 
         print(f"New Tweet Found! : {url}")
         post_to_discord(tweet['text'], url)
-        post_to_twitter(url)
+        #post_to_twitter(url)
              
         new_history.insert(0, url)
         send_count += 1
