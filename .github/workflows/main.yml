@@ -2,6 +2,8 @@ name: Twitter Monitor
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '*/10 * * * *'
 
 permissions:
   contents: write
@@ -19,29 +21,20 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install Chrome
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y google-chrome-stable
+      # ChromeとChromeDriverを簡単にインストール
+      - name: Setup Chrome
+        uses: browser-actions/setup-chrome@v1
 
-      - name: Install ChromeDriver
+      - name: Verify installation
         run: |
-          CHROME_VERSION=$(google-chrome --version | cut -d ' ' -f 3 | cut -d '.' -f 1)
-          CHROMEDRIVER_VERSION=$(curl -s "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_$CHROME_VERSION")
-          wget -q "https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip"
-          unzip chromedriver_linux64.zip
-          sudo mv chromedriver /usr/local/bin/
-          sudo chmod +x /usr/local/bin/chromedriver
+          which google-chrome
+          which chromedriver
+          google-chrome --version
+          chromedriver --version
 
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-
-      - name: Cache Twitter profile
-        uses: actions/cache@v3
-        with:
-          path: twitter_profile
-          key: ${{ runner.os }}-twitter-profile
 
       - name: Run script
         env:
@@ -56,4 +49,4 @@ jobs:
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
           git add history.txt
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Update tweet history" && git push)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update tweet history [skip ci]" && git push)
