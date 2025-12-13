@@ -21,7 +21,6 @@ jobs:
         with:
           python-version: '3.9'
 
-      # ChromeとChromeDriverを簡単にインストール
       - name: Setup Chrome
         uses: browser-actions/setup-chrome@v1
 
@@ -44,18 +43,19 @@ jobs:
           TWITTER_USERNAME: ${{ secrets.TWITTER_USERNAME }}
         run: python main.py
 
+      - name: Upload debug files
+        # if: failure() を削除（常にアップロード）
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-files-${{ github.run_id }}
+          path: |
+            *.png
+            *.html
+          retention-days: 7
+
       - name: Commit and push if changed
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
           git add history.txt
           git diff --quiet && git diff --staged --quiet || (git commit -m "Update tweet history [skip ci]" && git push)
-      - name: Upload debug files
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: debug-files
-          path: |
-            *.png
-            *.html
-          retention-days: 7
