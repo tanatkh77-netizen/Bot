@@ -6,7 +6,7 @@ import re
 import tweepy
 
 KEYWORDS = ["てとぼ", "テトぼ", "テトリスぼ", "スワぼ", "すわぼ", "スワップぼ"]
-BLOCKED_IDS = ["Hikarukisi_lv77", "sw_maha"]
+BLOCKED_IDS = ["user_id", "sw_maha"]
 QUERY = " OR ".join(KEYWORDS)
 
 HISTORY_FILE = "history.txt"
