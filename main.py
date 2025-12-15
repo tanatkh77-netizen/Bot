@@ -147,6 +147,11 @@ def main():
             print(f"Skipped blocked user: {url}")
             continue
 
+        excluded_keywords = ["てとぼっと", "トボトボ", "とぼとぼ", "ぽてと"]
+        if any(keyword in tweet['text'] for keyword in excluded_keywords):
+            print(f"Skipped excluded keyword: {url}")
+            continue
+
         print(f"New Tweet Found! : {url}")
         post_to_discord(tweet['text'], url)
         post_to_twitter(url)
