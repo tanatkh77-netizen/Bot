@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 import time
 import re
 import tweepy
-import google.generativeai as genai
+from google import genai
 
 KEYWORDS = ["てとぼ", "テトぼ", "テトリスぼ", "スワぼ", "すわぼ", "スワップぼ"]
 
@@ -26,12 +26,14 @@ def check_gemini(text):
         return True
 
     try:
-        genai.configure(api_key=GEMINI_API_KEY)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        client = genai.Client(api_key=GEMINI_API_KEY)
         
         prompt = f"あなたは、以下の文章にテトリスの対戦相手を募集する意図があるかどうかを判定しなさい。意図がある場合、1を、ない場合は0だけを出力しなさい\n\n{text}"
         
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model="gemini-1.5-flash",
+            contents=prompt
+        )
         result = response.text.strip()
         
         print(f"Gemini判定結果: {result} / 対象テキスト: {text[:20]}...")
