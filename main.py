@@ -125,10 +125,17 @@ def get_yahoo_realtime_tweets():
         if ("/status/" in href) and ("twitter.com" in href or "x.com" in href):
             clean_url = href.split('?')[0]
             
-            container = a_tag.find_parent('div')
+            # リンク(aタグ)の直近の親divだけでは本文が含まれない場合があるため、
+            # 親要素を数階層遡って、ツイート全体を含むコンテナを取得する
+            container = a_tag
+            for _ in range(3):
+                if container and container.parent:
+                    container = container.parent
+            
             text = container.get_text(strip=True) if container else "詳細なし"
             
             text = re.sub(r'\d{1,2}(秒|分|時間|日)前', '', text)
+
 
             if len(text) > 150:
                 text = text[:150] + "..."
