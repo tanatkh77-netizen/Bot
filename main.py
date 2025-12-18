@@ -32,7 +32,7 @@ def check_gemini(text):
         
         # モデルを最新かつ最安価な gemini-2.5-flash-lite に変更
         response = client.models.generate_content(
-            model="gemini-2.5-flash-lite", 
+            model="gemini-3-flash", 
             contents=prompt
         )
         result = response.text.strip()
