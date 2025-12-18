@@ -4,8 +4,10 @@ from bs4 import BeautifulSoup
 import time
 import re
 import tweepy
+import google.generativeai as genai
 
 KEYWORDS = ["てとぼ", "テトぼ", "テトリスぼ", "スワぼ", "すわぼ", "スワップぼ"]
+
 BLOCKED_IDS = ["K9jFFdajDs32941", "sw_maha"]
 QUERY = " OR ".join(KEYWORDS)
 
@@ -16,6 +18,32 @@ TWITTER_API_KEY = os.environ.get("TWITTER_API_KEY")
 TWITTER_API_SECRET = os.environ.get("TWITTER_API_SECRET")
 TWITTER_ACCESS_TOKEN = os.environ.get("TWITTER_ACCESS_TOKEN")
 TWITTER_ACCESS_TOKEN_SECRET = os.environ.get("TWITTER_ACCESS_TOKEN_SECRET")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+
+def check_gemini(text):
+    if not GEMINI_API_KEY:
+        print("Gemini API Key未設定のためスルーします")
+        return True
+
+    try:
+        genai.configure(api_key=GEMINI_API_KEY)
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        
+        prompt = f"あなたは、以下の文章にテトリスの対戦相手を募集する意図があるかどうかを判定しなさい。意図がある場合、1を、ない場合は0だけを出力しなさい\n\n{text}"
+        
+        response = model.generate_content(prompt)
+        result = response.text.strip()
+        
+        print(f"Gemini判定結果: {result} / 対象テキスト: {text[:20]}...")
+
+        if result == "0":
+            return False
+        else:
+            return True
+
+    except Exception as e:
+        print(f"Geminiエラー発生(通過させます): {e}")
+        return True
 
 def post_to_twitter(tweet_url):
     if not all([TWITTER_API_KEY, TWITTER_API_SECRET, TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_TOKEN_SECRET]):
@@ -152,6 +180,11 @@ def main():
             print(f"Skipped excluded keyword: {url}")
             continue
 
+        if not check_gemini(tweet['text']):
+            print(f"Gemini判定によりスキップ: {url}")
+            new_history.insert(0, url)
+            continue
+
         print(f"New Tweet Found! : {url}")
         post_to_discord(tweet['text'], url)
         post_to_twitter(url)
@@ -159,9 +192,9 @@ def main():
         new_history.insert(0, url)
         send_count += 1
       
-    if send_count > 0:
+    if new_history != history:
         save_history(new_history)
-        print(f"Total {send_count} tweets sent.")
+        print(f"Total {send_count} tweets sent (History updated).")
     else:
         print("新着ツイートはありませんでした。")
 
