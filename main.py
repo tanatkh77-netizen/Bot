@@ -30,8 +30,9 @@ def check_gemini(text):
         
         prompt = f"あなたは、以下の文章にテトリスの対戦相手を募集する意図があるかどうかを判定しなさい。意図がある場合、1を、ない場合は0だけを出力しなさい\n\n{text}"
         
+        # モデルを最新かつ最安価な gemini-2.5-flash-lite に変更
         response = client.models.generate_content(
-            model="gemini-1.5-flash",
+            model="gemini-2.5-flash-lite", 
             contents=prompt
         )
         result = response.text.strip()
@@ -44,6 +45,7 @@ def check_gemini(text):
             return True
 
     except Exception as e:
+        # エラー発生時はログを出して、安全のため通過(True)させる既存ロジックを維持
         print(f"Geminiエラー発生(通過させます): {e}")
         return True
 
@@ -182,6 +184,7 @@ def main():
             print(f"Skipped excluded keyword: {url}")
             continue
 
+        # Geminiチェック呼び出し
         if not check_gemini(tweet['text']):
             print(f"Gemini判定によりスキップ: {url}")
             new_history.insert(0, url)
