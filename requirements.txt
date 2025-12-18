@@ -3,4 +3,4 @@ beautifulsoup4
 lxml
 tweepy
 selenium>=4.0.0
-google-generativeai
+google-genai
