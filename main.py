@@ -123,18 +123,28 @@ def get_yahoo_realtime_tweets():
         href = a_tag['href']
         
         if ("/status/" in href) and ("twitter.com" in href or "x.com" in href):
-            clean_url = href.split('?')[0]
+        clean_url = href.split('?')[0]
             
-            # リンク(aタグ)の直近の親divだけでは本文が含まれない場合があるため、
-            # 親要素を数階層遡って、ツイート全体を含むコンテナを取得する
-            container = a_tag
-            for _ in range(3):
-                if container and container.parent:
-                    container = container.parent
-            
+            container = a_tag.find_parent('div')
             text = container.get_text(strip=True) if container else "詳細なし"
             
+            full_container = a_tag
+            for _ in range(3):
+                if full_container and full_container.parent:
+                    full_container = full_container.parent
+            full_text = full_container.get_text(strip=True) if full_container else text
+
             text = re.sub(r'\d{1,2}(秒|分|時間|日)前', '', text)
+            full_text = re.sub(r'\d{1,2}(秒|分|時間|日)前', '', full_text)
+
+            if len(text) > 150:
+                text = text[:150] + "..."
+
+            found_tweets.append({
+                "url": clean_url,
+                "text": text,
+                "full_text": full_text
+            })
 
 
             if len(text) > 150:
@@ -192,7 +202,7 @@ def main():
             continue
 
         # Geminiチェック呼び出し
-        if not check_gemini(tweet['text']):
+        if not check_gemini(tweet['full_text']):
             print(f"Gemini判定によりスキップ: {url}")
             new_history.insert(0, url)
             continue
