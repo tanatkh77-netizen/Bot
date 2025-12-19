@@ -123,7 +123,7 @@ def get_yahoo_realtime_tweets():
         href = a_tag['href']
         
         if ("/status/" in href) and ("twitter.com" in href or "x.com" in href):
-        clean_url = href.split('?')[0]
+            clean_url = href.split('?')[0]
             
             container = a_tag.find_parent('div')
             text = container.get_text(strip=True) if container else "詳細なし"
