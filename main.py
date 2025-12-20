@@ -37,7 +37,7 @@ def check_gemini(text):
         )
         result = response.text.strip()
         
-        print(f"Gemini判定結果: {result} / 対象テキスト: {text[:20]}...")
+        print(f"Gemini判定結果: {result} / 対象テキスト: {text}")
 
         if result.endswith("0"):
             return False
