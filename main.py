@@ -28,7 +28,7 @@ def check_gemini(text):
     try:
         client = genai.Client(api_key=GEMINI_API_KEY)
         
-        prompt = f"あなたは、以下の文章にテトリスの対戦相手を募集する意図があるかどうかを判定しなさい。意図がある場合、1を、ない場合は0だけを出力しなさい\n\n{text}"
+        prompt = f"あなたは、以下の文章にテトリスの対戦相手を募集する意図があるかどうかを判定しなさい。\nまず判断の根拠を述べ、最後に改行して、意図がある場合は1、ない場合は0の数字1文字のみを出力しなさい。\n\n{text}"
         
         # モデルを最新かつ最安価な gemini-2.5-flash-lite に変更
         response = client.models.generate_content(
@@ -39,7 +39,7 @@ def check_gemini(text):
         
         print(f"Gemini判定結果: {result} / 対象テキスト: {text[:20]}...")
 
-        if result == "0":
+        if result.endswith("0"):
             return False
         else:
             return True
@@ -204,6 +204,7 @@ def main():
         # Geminiチェック呼び出し
         if not check_gemini(tweet['full_text']):
             print(f"Gemini判定によりスキップ: {url}")
+            post_to_discord(f"【除外】\n{tweet['text']}", url) #
             new_history.insert(0, url)
             continue
 
