@@ -28,9 +28,9 @@ def check_gemini(text):
     try:
         client = genai.Client(api_key=GEMINI_API_KEY)
         
-        prompt = f"あなたは、以下の文章にテトリスの対戦相手を募集する意図があるかどうかを判定しなさい。\nまず判断の根拠を述べ、最後に改行して、意図がある場合は1、ない場合は0の数字1文字のみを出力しなさい。\n\n{text}"
+        prompt = f"あなたは、以下のツイートにテトリスの対戦相手を募集する意図があるかどうかを判定しなさい。末尾の@以降の文章はTwitterのIDなどなので無視して良い。てとぼ、テトぼはテトリス募集の略称であり、15先などは15本先取の略称、3000↑などは、レート制限を表します。\nまず判断の根拠を述べ、最後に改行して、意図がある場合は1、ない場合は0の数字1文字のみを出力しなさい。\n\n{text}"
         
-        # モデルを最新かつ最安価な gemini-2.5-flash-lite に変更
+        # モデルを最新かつ最安価な gemini-2.5-flashに変更
         response = client.models.generate_content(
             model="gemini-2.5-flash", 
             contents=prompt
