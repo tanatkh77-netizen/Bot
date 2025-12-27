@@ -209,7 +209,6 @@ def main():
 
         if not is_recruitment:
             print(f"Gemini判定によりスキップ: {url}")
-            post_to_discord(f"【除外】\n{tweet['text']}", url) 
             new_history.insert(0, url)
             continue
 
@@ -218,7 +217,6 @@ def main():
         discord_banned_users = ["Hikarukisi_lv77", "magyou1111"]
         if any(user in tweet['full_text'] or user in tweet['text'] for user in discord_banned_users):
             print(f"Discord特定ユーザー検出: {url}")
-            post_to_discord(f"【特】\n{tweet['text']}", url)
         else:
             post_to_discord(tweet['text'], url)
 
