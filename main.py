@@ -201,7 +201,7 @@ def main():
             print(f"Skipped excluded keyword: {url}")
             continue
 
-        if "@tetobobot" in tweet['text']:
+        if "@tetobobot" in tweet['text'] or "@tetobobot" in tweet.get('full_text', ''):
             print(f"@tetobobot検出 強制採用: {url}")
             is_recruitment = True
         else:
