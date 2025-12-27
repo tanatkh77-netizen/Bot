@@ -201,15 +201,27 @@ def main():
             print(f"Skipped excluded keyword: {url}")
             continue
 
-        # Geminiチェック呼び出し
-        if not check_gemini(tweet['full_text']):
+        if "@tetobot" in tweet['text']:
+            print(f"@tetobot検出により強制採用: {url}")
+            is_recruitment = True
+        else:
+            is_recruitment = check_gemini(tweet['full_text'])
+
+        if not is_recruitment:
             print(f"Gemini判定によりスキップ: {url}")
-            post_to_discord(f"【除外】\n{tweet['text']}", url) #
+            post_to_discord(f"【除外】\n{tweet['text']}", url) 
             new_history.insert(0, url)
             continue
 
         print(f"New Tweet Found! : {url}")
-        post_to_discord(tweet['text'], url)
+        
+        discord_banned_users = ["Hikarukisi_lv77", "magyou1111"]
+        if any(user in tweet['full_text'] or user in tweet['text'] for user in discord_banned_users):
+            print(f"Discord出禁ユーザー検出: {url}")
+            post_to_discord(f"【出禁】\n{tweet['text']}", url)
+        else:
+            post_to_discord(tweet['text'], url)
+
         post_to_twitter(url)
              
         new_history.insert(0, url)
