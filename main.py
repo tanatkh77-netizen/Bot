@@ -201,8 +201,8 @@ def main():
             print(f"Skipped excluded keyword: {url}")
             continue
 
-        if "@tetobot" in tweet['text']:
-            print(f"@tetobobot検出により強制採用: {url}")
+        if "@tetobobot" in tweet['text']:
+            print(f"@tetobobot検出 強制採用: {url}")
             is_recruitment = True
         else:
             is_recruitment = check_gemini(tweet['full_text'])
