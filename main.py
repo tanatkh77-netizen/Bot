@@ -202,7 +202,7 @@ def main():
             continue
 
         if "@tetobot" in tweet['text']:
-            print(f"@tetobot検出により強制採用: {url}")
+            print(f"@tetobobot検出により強制採用: {url}")
             is_recruitment = True
         else:
             is_recruitment = check_gemini(tweet['full_text'])
