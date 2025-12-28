@@ -6,7 +6,7 @@ import re
 import tweepy
 from google import genai
 
-KEYWORDS = ["てとぼ", "テトぼ", "テトリスぼ", "スワぼ", "すわぼ", "スワップぼ"]
+KEYWORDS = ["てとぼ", "テトぼ", "テトリスぼ", "スワぼ", "すわぼ", "テトボ", "テトリス募集", "スワップ募集","スワップぼ"]
 
 BLOCKED_IDS = ["K9jFFdajDs32941","Hikarukisi_lv77","3hiraganabot2", "sw_maha"]
 QUERY = " OR ".join(KEYWORDS)
@@ -82,14 +82,14 @@ def save_history(urls):
     with open(HISTORY_FILE, "w") as f:
         f.write("\n".join(urls[:1000]))
 
-ICON_URL = "https://raw.githubusercontent.com/tanatkh77-netizen/Bot/main/TERAmi2p_eisyo.png"
+ICON_URL = "https://raw.githubusercontent.com/tanatkh77-netizen/Bot/main/TERAyun_seisyo_aikon.png"
 
 def post_to_discord(text, url):
     if not DISCORD_WEBHOOK_URL:
         return
     
     data = {
-        "username": "てとぼっと",
+        "username": "てらゆん",
         "avatar_url": ICON_URL,
         "content": f"\n{text}\n{url}"
     }
