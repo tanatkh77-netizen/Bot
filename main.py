@@ -201,6 +201,10 @@ def main():
             print(f"Skipped excluded keyword: {url}")
             continue
 
+        if not any(k in tweet['text'] or k in tweet.get('full_text', '') for k in KEYWORDS):
+            print(f"Skipped split keyword: {url}")
+            continue
+
         if "@tetobobot" in tweet['text'] or "@tetobobot" in tweet.get('full_text', ''):
             print(f"@tetobobot検出 強制採用: {url}")
             is_recruitment = True
