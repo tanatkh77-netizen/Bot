@@ -126,13 +126,13 @@ def get_yahoo_realtime_tweets():
             clean_url = href.split('?')[0]
             
             container = a_tag.find_parent('div')
-            text = container.get_text(strip=True) if container else "詳細なし"
+            text = container.get_text(" ", strip=True) if container else "詳細なし"
             
             full_container = a_tag
             for _ in range(3):
                 if full_container and full_container.parent:
                     full_container = full_container.parent
-            full_text = full_container.get_text(strip=True) if full_container else text
+            full_text = full_container.get_text(" ", strip=True) if full_container else text
 
             text = re.sub(r'\d{1,2}(秒|分|時間|日)前', '', text)
             full_text = re.sub(r'\d{1,2}(秒|分|時間|日)前', '', full_text)
