@@ -8,7 +8,7 @@ from google import genai
 
 KEYWORDS = ["てとぼ", "テトぼ", "テトリスぼ", "スワぼ", "すわぼ", "テトボ", "テトリス募集", "スワップ募集","スワップぼ"]
 
-BLOCKED_IDS = ["K9jFFdajDs32941","3hiraganabot2", "sw_maha", "tekito878700"]
+BLOCKED_IDS = ["K9jFFdajDs32941","3hiraganabot2", "sw_maha", "tekito878700", "Nito_R1" ]
 QUERY = " OR ".join(KEYWORDS)
 
 HISTORY_FILE = "history.txt"
